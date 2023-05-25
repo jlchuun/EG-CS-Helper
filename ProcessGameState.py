@@ -1,18 +1,29 @@
+import pandas as pd
 
 class ProcessGameState:
     def __init__(self, filePath):
-        # load data from file path
+        # load data into data var
+        self.data = self.load_data(filePath)
 
-    def loadData(self, filePath):
-        # load data from file path
+    # return dataframe of parquet file
+    def load_data(self, filePath):
         # convert parquet into data frame
+        dataframe = pd.read_parquet(filePath, engine='pyarrow')
 
-        # perform ETL into readable data
+        return dataframe;
 
-    def validBoundary(self, x, y):
-        # check if give (x, y) is within map boundaries
-        # return True or False
+    # Parameters:
+    # round number (int)
+    # seconds in round (int)
+    # player name (string)
+    # (xBound, yBound) x and y boundaries as tuples ((int, int), (int, int))
+    # Returns if player was within given x and y boundaries at any point
+    # def valid_boundary(self, round, seconds, player, xBound, yBound):
 
-    def getWeapons(self):
-        # parse inventory json for weapon classes
-        # return list of weapons
+
+    # def get_weapons(self):
+    #     parse inventory json for weapon classes
+    #     return list of weapons
+
+game_state = ProcessGameState('game_state_frame_data.parquet')
+game_state.valid_boundary(5, 10, 'Player0', (-2000, 0), (-4000, 0))
