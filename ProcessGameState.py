@@ -1,4 +1,5 @@
 import pandas as pd
+import json
 
 class ProcessGameState:
     def __init__(self, filePath):
@@ -17,7 +18,7 @@ class ProcessGameState:
     # seconds in round (int)
     # player name (string)
     # (xBound, yBound) x and y boundaries as tuples ((int, int), (int, int))
-    # Returns if player was within given x and y boundaries at any point
+    # Returns True if player within x and y bounds, else False
     def valid_boundary(self, round, seconds, player, xBound, yBound):
         # query for player in round, second
         query_string = "round_num == {} and seconds == {} and player == '{}'".format(round, seconds, player)
@@ -36,9 +37,25 @@ class ProcessGameState:
         print('Not in bounds')
         return False
 
-    # def get_weapons(self):
-    #     parse inventory json for weapon classes
-    #     return list of weapons
+    # Parameters:
+    # round number (int)
+    # seconds into round (int)
+    # side (CT/T) (string)
+    # return list of weapon classes per player
+    def get_weapons(self, round, seconds, side):
+        # query for all players on side at round, seconds
+        query_string = "round_num == {} and seconds == {} and side == '{}'".format(round, seconds, side)
+        query_res = self.data.query(query_string)
+
+        weapon_classes = []
+        for _, row in query_res.iterrows():
+            inventory_data = row['inventory']
+
+
+            weapon_classes.append([weapon['weapon_class'] for weapon in inventory_data])
+        print(weapon_classes)
+        return weapon_classes
 
 game_state = ProcessGameState('game_state_frame_data.parquet')
 game_state.valid_boundary(5, 10, 'Player0', (-2000, 0), (-4000, 0))
+game_state.get_weapons(3, 20, 'T')
