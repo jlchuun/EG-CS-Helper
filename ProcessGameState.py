@@ -2,6 +2,10 @@ import pandas as pd
 from shapely.geometry import Point, Polygon
 import json
 
+# Boundary vertices for light blue area
+BOX_BOUNDS = ((-1735, 250), (-2806, 742), (-2472, 1233), (-1565, 580))
+
+
 class ProcessGameState:
     def __init__(self, filePath):
         # load data into data var
@@ -15,12 +19,10 @@ class ProcessGameState:
         return dataframe;
 
     # Parameters:
-    # round number (int)
-    # seconds in round (int)
-    # player name (string)
+    # (x, y) coordinates
     # boundary vertices (3 or more) to form boundary shape
-    # Returns True if player within x and y bounds, else False
-    def valid_boundary(self, round, seconds, player, boundary_vertices):
+    # Returns True if coordinates within boundaries, else False
+    def within_boundary(self, x, y, boundary_vertices):
         # query for player in round, second
         query_string = "round_num == {} and seconds == {} and player == '{}'".format(round, seconds, player)
         query_res = self.data.query(query_string)
@@ -56,5 +58,5 @@ class ProcessGameState:
         return weapon_classes
 
 game_state = ProcessGameState('game_state_frame_data.parquet')
-game_state.valid_boundary(10, 30, 'Player0', ((-1735, 250), (-2806, 742), (-2472, 1233), (-1565, 580)))
+# game_state.valid_boundary(10, 30, 'Player0', BOX_BOUNDS)
 game_state.get_weapons(3, 20, 'T')
