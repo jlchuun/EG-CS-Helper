@@ -1,4 +1,5 @@
 import pandas as pd
+from shapely.geometry import Point, Polygon
 import json
 
 class ProcessGameState:
@@ -17,22 +18,20 @@ class ProcessGameState:
     # round number (int)
     # seconds in round (int)
     # player name (string)
-    # (xBound, yBound) x and y boundaries as tuples ((int, int), (int, int))
+    # boundary vertices (3 or more) to form boundary shape
     # Returns True if player within x and y bounds, else False
-    def valid_boundary(self, round, seconds, player, xBound, yBound):
+    def valid_boundary(self, round, seconds, player, boundary_vertices):
         # query for player in round, second
         query_string = "round_num == {} and seconds == {} and player == '{}'".format(round, seconds, player)
         query_res = self.data.query(query_string)
 
-        x_min, x_max = xBound[0], xBound[1]
-        y_min, y_max = yBound[0], yBound[1]
-
         for _, row in query_res.iterrows():
             x, y = row['x'], row['y']
-            print(type(x))
-            # return True on first instance of player within bounds
-            if (x_min <= x) & (x <= x_max) & (y_min <= y) & (y <= y_max):
-                print('Within bounds!')
+            point = Point(x, y)
+            bound_shape = Polygon(boundary_vertices)
+
+            if (bound_shape.contains(point)):
+                print("Within Bounds")
                 return True
         print('Not in bounds')
         return False
@@ -57,5 +56,5 @@ class ProcessGameState:
         return weapon_classes
 
 game_state = ProcessGameState('game_state_frame_data.parquet')
-game_state.valid_boundary(5, 10, 'Player0', (-2000, 0), (-4000, 0))
+game_state.valid_boundary(10, 30, 'Player0', ((-1735, 250), (-2806, 742), (-2472, 1233), (-1565, 580)))
 game_state.get_weapons(3, 20, 'T')
