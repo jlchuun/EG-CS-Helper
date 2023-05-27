@@ -50,26 +50,34 @@ class ProcessGameState:
         return weapon_classes
 
     # Parameters:
+    # Team 1 or 2
     # boundary for analysis
     # Prints statistics for side statistics at specified boundary
-    # Note: Uses both teams for side statistics
-    def get_bounds_stats(self, boundary):
-        total_rounds = self.data['round_num'].nunique()
+    def get_bounds_stats(self, team, boundary):
+        team_data = self.data[self.data['team'] == team]
+
+        t_total_rounds = team_data[team_data['side'] == 'T']['round_num'].nunique()
+        ct_total_rounds = team_data[team_data['side'] == 'CT']['round_num'].nunique()
+
+
 
         # Count rounds both teams entered boundary at least once
-        ct_count = self.data[self.data['side'] == 'CT'].groupby('round_num').filter(
+        ct_count = team_data[team_data['side'] == 'CT'].groupby('round_num').filter(
             lambda x: any(x[['x', 'y']].apply(lambda row: self.within_boundary(row['x'], row['y'], BOX_BOUNDS), axis=1)))[
             'round_num'].nunique()
 
-        t_count = self.data[self.data['side'] == 'T'].groupby('round_num').filter(
+        t_count = team_data[team_data['side'] == 'T'].groupby('round_num').filter(
             lambda x: any(x[['x', 'y']].apply(lambda row: self.within_boundary(row['x'], row['y'], BOX_BOUNDS), axis=1)))[
             'round_num'].nunique()
 
-        print("T entered bounds {} / {} rounds".format(t_count, total_rounds))
-        print("CT entered bounds {} / {} rounds".format(ct_count, total_rounds))
+        print("'{}' Stats: ".format(team))
+        print("T entered bounds {} / {} rounds".format(t_count, t_total_rounds))
+        print("CT entered bounds {} / {} rounds".format(ct_count, ct_total_rounds))
 
 
 game_state = ProcessGameState('game_state_frame_data.parquet')
-game_state.get_bounds_stats(BOX_BOUNDS)
+game_state.get_bounds_stats('Team1', BOX_BOUNDS)
+game_state.get_bounds_stats('Team2', BOX_BOUNDS)
+
 
 game_state.get_weapons(3, 20, 'T')
