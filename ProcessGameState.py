@@ -22,20 +22,12 @@ class ProcessGameState:
     # (x, y) coordinates
     # boundary vertices (3 or more) to form boundary shape
     # Returns True if coordinates within boundaries, else False
-    def within_boundary(self, x, y, boundary_vertices):
-        # query for player in round, second
-        query_string = "round_num == {} and seconds == {} and player == '{}'".format(round, seconds, player)
-        query_res = self.data.query(query_string)
+    def within_boundary(self, x, y, bounds):
+        point = Point(x, y)
+        bound_shape = Polygon(bounds)
 
-        for _, row in query_res.iterrows():
-            x, y = row['x'], row['y']
-            point = Point(x, y)
-            bound_shape = Polygon(boundary_vertices)
-
-            if (bound_shape.contains(point)):
-                print("Within Bounds")
-                return True
-        print('Not in bounds')
+        if (bound_shape.contains(point)):
+            return True
         return False
 
     # Parameters:
@@ -57,6 +49,27 @@ class ProcessGameState:
         print(weapon_classes)
         return weapon_classes
 
+    # Parameters:
+    # boundary for analysis
+    # Prints statistics for side statistics at specified boundary
+    # Note: Uses both teams for side statistics
+    def get_bounds_stats(self, boundary):
+        total_rounds = self.data['round_num'].nunique()
+
+        # Count rounds both teams entered boundary at least once
+        ct_count = self.data[self.data['side'] == 'CT'].groupby('round_num').filter(
+            lambda x: any(x[['x', 'y']].apply(lambda row: self.within_boundary(row['x'], row['y'], BOX_BOUNDS), axis=1)))[
+            'round_num'].nunique()
+
+        t_count = self.data[self.data['side'] == 'T'].groupby('round_num').filter(
+            lambda x: any(x[['x', 'y']].apply(lambda row: self.within_boundary(row['x'], row['y'], BOX_BOUNDS), axis=1)))[
+            'round_num'].nunique()
+
+        print("T entered bounds {} / {} rounds".format(t_count, total_rounds))
+        print("CT entered bounds {} / {} rounds".format(ct_count, total_rounds))
+
+
 game_state = ProcessGameState('game_state_frame_data.parquet')
-# game_state.valid_boundary(10, 30, 'Player0', BOX_BOUNDS)
+game_state.get_bounds_stats(BOX_BOUNDS)
+
 game_state.get_weapons(3, 20, 'T')
