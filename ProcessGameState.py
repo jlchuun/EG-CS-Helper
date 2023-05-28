@@ -16,6 +16,11 @@ class ProcessGameState:
         # convert parquet into data frame
         dataframe = pd.read_parquet(filePath, engine='pyarrow')
 
+        # create new column for weapon classes
+        dataframe['weapon_classes'] = dataframe['inventory'].apply(
+            lambda inventory: [item['weapon_class'] for item in inventory] if inventory is not None else []
+        )
+
         return dataframe;
 
     # Parameters:
@@ -31,35 +36,13 @@ class ProcessGameState:
         return False
 
     # Parameters:
-    # round number (int)
-    # seconds into round (int)
-    # side (CT/T) (string)
-    # return list of weapon classes per player
-    def get_weapons(self, round, seconds, side):
-        # query for all players on side at round, seconds
-        query_string = "round_num == {} and seconds == {} and side == '{}'".format(round, seconds, side)
-        query_res = self.data.query(query_string)
-
-        weapon_classes = []
-        for _, row in query_res.iterrows():
-            inventory_data = row['inventory']
-
-
-            weapon_classes.append([weapon['weapon_class'] for weapon in inventory_data])
-        print(weapon_classes)
-        return weapon_classes
-
-    # Parameters:
     # Team 1 or 2
     # boundary for analysis
     # Prints statistics for side statistics at specified boundary
     def get_bounds_stats(self, team, boundary):
         team_data = self.data[self.data['team'] == team]
-
         t_total_rounds = team_data[team_data['side'] == 'T']['round_num'].nunique()
         ct_total_rounds = team_data[team_data['side'] == 'CT']['round_num'].nunique()
-
-
 
         # Count rounds both teams entered boundary at least once
         ct_count = team_data[team_data['side'] == 'CT'].groupby('round_num').filter(
@@ -75,9 +58,10 @@ class ProcessGameState:
         print("CT entered bounds {} / {} rounds".format(ct_count, ct_total_rounds))
 
 
+
+
+
 game_state = ProcessGameState('game_state_frame_data.parquet')
-game_state.get_bounds_stats('Team1', BOX_BOUNDS)
-game_state.get_bounds_stats('Team2', BOX_BOUNDS)
-
-
-game_state.get_weapons(3, 20, 'T')
+# game_state.get_bounds_stats('Team1', BOX_BOUNDS)
+# game_state.get_bounds_stats('Team2', BOX_BOUNDS)
+game_state.get_site_stats('Team2', 'T', 'BombsiteB', ['Rifles', 'SMGs'])
