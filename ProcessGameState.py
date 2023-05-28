@@ -57,11 +57,35 @@ class ProcessGameState:
         print("T entered bounds {} / {} rounds".format(t_count, t_total_rounds))
         print("CT entered bounds {} / {} rounds".format(ct_count, ct_total_rounds))
 
+    # Parameters:
+    # Team 1 or 2
+    # Side (CT or T)
+    # Site area name (BombsiteA or BombsiteB)
+    # Weapon classes
+    def get_site_weapon_stats(self, team, side, site, weapons):
+        # get team data for side and area
+        team_data = self.data[(self.data['team'] == team) & (self.data['side'] == side) & (self.data['area_name'] == site)]
+        # get only the first row where a player is in a site per round
+        team_data = team_data.groupby(['round_num', 'player']).first().reset_index()
+        # filter rows so only rounds with at least 2 or more rifles/smgs are included
 
+        selected_cols = ['team', 'player', 'round_num', 'seconds', 'weapon_classes']
+
+        # filter to get all rows with specified weapons
+        team_data = team_data[team_data['weapon_classes'].apply(
+            lambda x: any(weapon in x for weapon in weapons)
+        )]
+
+        # get rows that have at least 2 of the specified weapons in the round
+        team_data = team_data[selected_cols].groupby('round_num').filter(
+            lambda x: len(x) >= 2
+        )
+        print(team_data)
+        print("Average time into round: {}".format(team_data['seconds'].mean()))
 
 
 
 game_state = ProcessGameState('game_state_frame_data.parquet')
 # game_state.get_bounds_stats('Team1', BOX_BOUNDS)
 # game_state.get_bounds_stats('Team2', BOX_BOUNDS)
-game_state.get_site_stats('Team2', 'T', 'BombsiteB', ['Rifles', 'SMGs'])
+game_state.get_site_weapon_stats('Team2', 'T', 'BombsiteB', ['Rifle', 'SMG'])
