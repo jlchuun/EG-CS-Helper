@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 from shapely.geometry import Point, Polygon
 import json
 
@@ -83,9 +85,32 @@ class ProcessGameState:
         print(team_data)
         print("Average time into round: {}".format(team_data['seconds'].mean()))
 
+    # Parameters:
+    # Team name
+    # Side (CT or T)
+    # Min_seconds into round (used for a min time threshold)
+    # Site (area_name for site)
+    # Generate heatmap for player coords on site
+    def get_site_heatmap(self, team, side, min_seconds, site):
+        # filter the data for relevant team data
+        team_data = self.data[(self.data['team'] == team) & (self.data['side'] == side) & (self.data['area_name'] == site) & (self.data['seconds'] >= min_seconds)]
+        # put all x and y coords into list
+        x_coords = team_data['x'].tolist()
+        y_coords = team_data['y'].tolist()
+
+        heatmap, xedges, yedges = np.histogram2d(x_coords, y_coords, bins=50)
+
+        # Plot the heatmap
+        plt.imshow(heatmap.T, origin='lower', cmap='hot', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+        plt.colorbar()
+        plt.title("{} Player Positions on {} Side for {}".format(team, side, site))
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.show()
 
 
 game_state = ProcessGameState('game_state_frame_data.parquet')
 # game_state.get_bounds_stats('Team1', BOX_BOUNDS)
 # game_state.get_bounds_stats('Team2', BOX_BOUNDS)
 game_state.get_site_weapon_stats('Team2', 'T', 'BombsiteB', ['Rifle', 'SMG'])
+game_state.get_site_heatmap('Team2', 'T', 30, 'BombsiteB')
